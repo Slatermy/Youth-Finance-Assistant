@@ -1,0 +1,10 @@
+{
+  "appId": "com.finance.assistant",
+  "appName": "青年财务助手",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "http://172.30.234.72:5000",
+    "cleartext": true
+  }
+}

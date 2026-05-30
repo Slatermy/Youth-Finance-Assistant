@@ -1,0 +1,462 @@
+<!-- templates/index.html - 前端页面 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="theme-color" content="#2b6e9e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="财务助手">
+    <link rel="manifest" href="/static/manifest.json">
+    <title>青年财务助手 · 预算与分析系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Roboto', sans-serif;
+        }
+
+        body {
+            background: #f0f4f8;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 28px;
+        }
+
+            .header h1 {
+                font-size: 1.8rem;
+                background: linear-gradient(135deg, #1e3c72, #2b4f8c);
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+            }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 24px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 4px solid #2b6e9e;
+            padding-left: 14px;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        label {
+            font-weight: 500;
+            color: #2c4c6e;
+            min-width: 50px;
+        }
+
+        input, select, button {
+            padding: 10px 14px;
+            border-radius: 30px;
+            border: 1px solid #cbdde9;
+            font-size: 0.9rem;
+        }
+
+        button {
+            background: #2b6e9e;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+            button:hover {
+                background: #1f557a;
+                transform: translateY(-1px);
+            }
+
+        .btn-outline {
+            background: #eef3fa;
+            color: #1f557a;
+            border: 1px solid #cbdde9;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #e2edf7;
+        }
+
+        .income {
+            color: #2c8c5a;
+            font-weight: bold;
+        }
+
+        .expense {
+            color: #c23b22;
+            font-weight: bold;
+        }
+
+        .delete-btn {
+            background: none;
+            color: #c23b22;
+            border: none;
+            cursor: pointer;
+            padding: 6px 12px;
+        }
+
+        .budget-bar {
+            background: #e0e9f2;
+            border-radius: 30px;
+            height: 12px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+
+        .budget-fill {
+            background: #2b6e9e;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+            .budget-fill.warning {
+                background: #e67e22;
+            }
+
+            .budget-fill.danger {
+                background: #c23b22;
+            }
+
+        .advice-box {
+            background: #eef3e8;
+            border-radius: 16px;
+            padding: 1rem;
+            line-height: 1.5;
+        }
+
+        .stats-summary {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+            font-size: 0.9rem;
+        }
+
+        canvas {
+            max-height: 250px;
+        }
+
+        .tx-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #7e95ab;
+        }
+
+        @media (max-width: 800px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            body {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-chart-line"></i> 青年财务助手 · 后端增强版</h1>
+            <p>Flask驱动 | 数据持久化 | 实时统计与智能建议</p>
+        </div>
+
+        <div class="grid">
+            <!-- 左侧：记账表单 + 交易列表 -->
+            <div>
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-book"></i> 记账流水</div>
+                    <div class="form-row">
+                        <select id="txType">
+                            <option value="expense">支出</option>
+                            <option value="income">收入</option>
+                        </select>
+                        <input type="number" id="txAmount" placeholder="金额" step="0.01">
+                        <select id="txCategory">
+                            <option value="餐饮">🍜 餐饮</option>
+                            <option value="交通">🚗 交通</option>
+                            <option value="学习">📚 学习</option>
+                            <option value="娱乐">🎮 娱乐</option>
+                            <option value="住房">🏠 住房</option>
+                            <option value="其他">📦 其他</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <input type="date" id="txDate">
+                        <input type="text" id="txNote" placeholder="备注 (可选)" style="flex:1">
+                        <button id="addBtn"><i class="fas fa-plus"></i> 添加</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-history"></i> 交易记录</div>
+                    <div id="transactionList" class="tx-list">加载中...</div>
+                </div>
+            </div>
+
+            <!-- 右侧：统计 + 预算 + 建议 -->
+            <div>
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-chart-pie"></i> 月度消费分类</div>
+                    <canvas id="expenseChart"></canvas>
+                    <div id="statsText" class="stats-summary"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-target"></i> 预算管理</div>
+                    <div class="form-row">
+                        <label>月度预算:</label>
+                        <input type="number" id="budgetInput" step="100" value="3000">
+                        <button id="setBudgetBtn">设定</button>
+                    </div>
+                    <div id="budgetInfo">
+                        <div>本月支出: ¥<span id="currentExpense">0</span> / ¥<span id="budgetAmount">3000</span></div>
+                        <div class="budget-bar"><div id="budgetFill" class="budget-fill"></div></div>
+                        <div id="budgetRemaining"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title"><i class="fas fa-lightbulb"></i> 智能分析建议</div>
+                    <div id="adviceBox" class="advice-box">正在分析数据...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const API_BASE = '/api';
+    let expenseChart = null;
+
+    // 获取当前日期
+    function setDefaultDate() {
+        const today = new Date().toISOString().slice(0,10);
+        if (!document.getElementById('txDate').value) {
+            document.getElementById('txDate').value = today;
+        }
+    }
+
+    // 加载仪表板数据
+    async function loadDashboard() {
+        try {
+            const res = await fetch(`${API_BASE}/dashboard`);
+            const data = await res.json();
+            if (data.success) {
+                const d = data.dashboard;
+                // 更新预算区域
+                document.getElementById('currentExpense').innerText = d.total_expense.toFixed(2);
+                document.getElementById('budgetAmount').innerText = d.budget.toFixed(2);
+                const percent = d.budget_percent;
+                const fill = document.getElementById('budgetFill');
+                fill.style.width = `${Math.min(percent, 100)}%`;
+                fill.classList.remove('warning', 'danger');
+                if (percent >= 100) fill.classList.add('danger');
+                else if (percent >= 80) fill.classList.add('warning');
+                const remaining = d.budget_remaining;
+                const remainingEl = document.getElementById('budgetRemaining');
+                if (remaining < 0) {
+                    remainingEl.innerHTML = `<span style="color:#c23b22;">⚠️ 已超支 ¥${Math.abs(remaining).toFixed(2)}</span>`;
+                } else {
+                    remainingEl.innerHTML = `剩余预算: ¥${remaining.toFixed(2)}`;
+                }
+
+                // 更新建议
+                document.getElementById('adviceBox').innerHTML = `<i class="fas fa-robot"></i> ${d.advice}`;
+
+                // 更新统计文本
+                document.getElementById('statsText').innerHTML = `总收入: ¥${d.total_income.toFixed(2)} | 总支出: ¥${d.total_expense.toFixed(2)} | 结余: ¥${d.balance.toFixed(2)}`;
+
+                // 更新图表
+                updateChart(d.category_stats);
+
+                // 更新交易列表
+                renderTransactions(d.recent_transactions);
+            }
+        } catch (err) {
+            console.error('加载失败:', err);
+        }
+    }
+
+    // 更新饼图
+    function updateChart(categoryStats) {
+        const categories = ['餐饮', '交通', '学习', '娱乐', '住房', '其他'];
+        const values = categories.map(cat => categoryStats[cat] || 0);
+        const ctx = document.getElementById('expenseChart').getContext('2d');
+        if (expenseChart) expenseChart.destroy();
+        expenseChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: categories,
+                datasets: [{
+                    data: values,
+                    backgroundColor: ['#3b82f6', '#f97316', '#8b5cf6', '#ec489a', '#14b8a6', '#94a3b8'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+
+    // 渲染交易列表
+    function renderTransactions(transactions) {
+        const container = document.getElementById('transactionList');
+        if (!transactions || transactions.length === 0) {
+            container.innerHTML = '<div class="loading">暂无记录，添加一笔吧 📝</div>';
+            return;
+        }
+        container.innerHTML = '';
+        transactions.forEach(tx => {
+            const div = document.createElement('div');
+            div.className = 'transaction-item';
+            const amountClass = tx.type === 'income' ? 'income' : 'expense';
+            const sign = tx.type === 'income' ? '+' : '-';
+            div.innerHTML = `
+                <div>
+                    <strong>${tx.category}</strong><br>
+                    <small>${tx.date} | ${tx.note || '无备注'}</small>
+                </div>
+                <div>
+                    <span class="${amountClass}">${sign} ¥${tx.amount.toFixed(2)}</span>
+                    <button class="delete-btn" data-id="${tx.id}"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+
+        // 绑定删除事件
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const id = btn.getAttribute('data-id');
+                if (confirm('确定删除这条记录吗？')) {
+                    await fetch(`${API_BASE}/transactions/${id}`, { method: 'DELETE' });
+                    loadDashboard();
+                }
+                e.stopPropagation();
+            });
+        });
+    }
+
+    // 添加交易
+    async function addTransaction() {
+        const type = document.getElementById('txType').value;
+        const amount = parseFloat(document.getElementById('txAmount').value);
+        const category = document.getElementById('txCategory').value;
+        const date = document.getElementById('txDate').value;
+        const note = document.getElementById('txNote').value;
+
+        if (isNaN(amount) || amount <= 0) {
+            alert('请输入有效金额');
+            return;
+        }
+        if (!date) {
+            alert('请选择日期');
+            return;
+        }
+
+        const transaction = { type, amount, category, date, note: note || '' };
+        try {
+            const res = await fetch(`${API_BASE}/transactions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(transaction)
+            });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('txAmount').value = '';
+                document.getElementById('txNote').value = '';
+                loadDashboard();
+            } else {
+                alert('添加失败: ' + data.error);
+            }
+        } catch (err) {
+            alert('网络错误');
+        }
+    }
+
+    // 设置预算
+    async function setBudget() {
+        const budget = parseFloat(document.getElementById('budgetInput').value);
+        if (isNaN(budget) || budget < 0) {
+            alert('请输入有效预算');
+            return;
+        }
+        const res = await fetch(`${API_BASE}/budget`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ budget })
+        });
+        const data = await res.json();
+        if (data.success) {
+            loadDashboard();
+        } else {
+            alert('设置失败');
+        }
+    }
+
+    // 事件绑定
+    document.getElementById('addBtn').addEventListener('click', addTransaction);
+    document.getElementById('setBudgetBtn').addEventListener('click', setBudget);
+
+    // 初始化
+    setDefaultDate();
+    loadDashboard();
+    // 每30秒刷新一次
+    setInterval(loadDashboard, 30000);
+
+    // 注册 Service Worker (PWA)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').then(reg => {
+            console.log('SW registered:', reg.scope);
+        }).catch(err => {
+            console.log('SW registration failed:', err);
+        });
+    }
+    </script>
+</body>
+</html>

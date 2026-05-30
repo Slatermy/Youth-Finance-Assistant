@@ -1,0 +1,43 @@
+========================================
+  青年财务助手 — 使用说明
+========================================
+
+【电脑端运行】
+
+1. 确认已安装 Python 3.9+（命令行输入 python --version 检查）
+
+2. 安装依赖：
+   pip install flask flask-cors
+
+3. 启动服务：
+   在 FlaskWebProject1 目录下执行：python app.py
+   看到 "Running on http://0.0.0.0:5000" 即启动成功
+
+4. 浏览器访问：http://localhost:5000
+
+
+【手机端使用（PWA 安装，推荐）】
+
+1. 前提：手机和电脑连接同一个 WiFi
+2. 查看电脑 IP：终端输入 ipconfig，找"无线局域网适配器"下的 IPv4 地址
+3. 手机浏览器访问：http://你的IP:5000
+4. Chrome 菜单 → "添加到主屏幕" → 即可像 App 一样使用
+
+
+【手机端使用（APK 安装，可选）】
+
+APK 在 apk/app-debug.apk，但该 APK 内写死了原 IP 地址，需要重新构建：
+
+1. 在 capacitor-app 目录下修改 capacitor.config.json 中的 IP 为你的 IP
+2. 安装 JDK 21 + Android SDK
+3. 执行：cd capacitor-app && npx cap sync android && cd android && gradlew assembleDebug
+4. 新 APK 在 capacitor-app/android/app/build/outputs/apk/debug/
+
+
+【常见问题】
+
+Q: 手机访问不了？
+A: ① 确认 Flask 启动了 ② 防火墙放行 5000 端口 ③ 同 WiFi
+
+Q: 想发给更多人用？
+A: 把 Flask 部署到云服务器，再修改 IP 重新构建 APK
