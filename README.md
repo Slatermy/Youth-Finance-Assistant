@@ -47,4 +47,4 @@ Mac 的 AirPlay 默认占用 5000 端口，两种解决方式：
 4. 确认访问的是电脑 IP 而非 localhost（终端输入 `ipconfig` 查看 IP）
 
 ### 前端图表不显示
-Chart.js 和 Font Awesome 走 CDN 加载，需要联网。断网时基本功能不受影响。
+Chart.js 和 Font Awesome 走 CDN 加载，需要联网。
