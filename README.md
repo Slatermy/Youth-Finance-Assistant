@@ -26,3 +26,25 @@ Python 3.9 / Flask / Chart.js / JSON
 ## 手机端使用
 
 同 WiFi 下手机浏览器访问 `http://电脑IP:5000`，添加到主屏幕即可像 App 一样使用。
+
+## 常见问题
+
+### 启动报错 `ModuleNotFoundError: No module named 'flask_cors'`
+依赖未安装：`pip install -r requirements.txt`
+
+### 电脑没装 Python
+去 [python.org](https://python.org) 下载安装（3.9 以上版本），安装时勾选 **Add Python to PATH**
+
+### macOS 端口 5000 被占用
+Mac 的 AirPlay 默认占用 5000 端口，两种解决方式：
+- 系统设置 → 通用 → AirDrop 与 Handoff → 关闭 AirPlay 接收器
+- 或修改 `app.py` 最后一行的 `port=5000` 为 `port=5001`
+
+### 手机连不上
+1. 确认手机和电脑连同一个 WiFi
+2. 确认 Flask 已启动（终端有 `Running on http://0.0.0.0:5000`）
+3. Windows 防火墙弹窗选"允许访问"
+4. 确认访问的是电脑 IP 而非 localhost（终端输入 `ipconfig` 查看 IP）
+
+### 前端图表不显示
+Chart.js 和 Font Awesome 走 CDN 加载，需要联网。断网时基本功能不受影响。
